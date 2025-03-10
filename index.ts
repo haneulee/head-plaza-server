@@ -16,6 +16,7 @@ io.on("connection", (socket: Socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("offer", (offer: any) => {
+    console.log("Received offer from mobile");
     mobileSocket = socket;
     if (viewerSocket) {
       viewerSocket.emit("offer", offer);
@@ -23,6 +24,7 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("answer", (answer: any) => {
+    console.log("Received answer from viewer");
     if (mobileSocket) {
       mobileSocket.emit("answer", answer);
     }
