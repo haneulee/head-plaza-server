@@ -1,11 +1,14 @@
-const { WebSocketServer } = require("ws");
-const { createServer } = require("http");
-const { join } = require("path");
-const multer = require("multer");
-const { v4: uuidv4 } = require("uuid");
-const { writeFile } = require("fs/promises");
-const express = require("express");
-const fs = require("fs");
+import { NextFunction, Request, Response } from "express";
+
+import { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
+import { createServer } from "http";
+import express from "express";
+import fs from "fs";
+import { join } from "path";
+import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
+import { writeFile } from "fs/promises";
 
 const app = express();
 const server = createServer(app);
@@ -15,7 +18,7 @@ const wss = new WebSocketServer({
 });
 
 // CORS 설정 추가
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -39,18 +42,18 @@ if (!fs.existsSync(VIDEOS_DIR)) {
 }
 
 // WebSocket 연결 관리
-const connections = new Map();
+const connections = new Map<string, WebSocket>();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws: WebSocket) => {
   const id = uuidv4();
   connections.set(id, ws);
 
-  ws.on("message", (data) => {
+  ws.on("message", (data: any) => {
     // 모바일에서 받은 스트림을 데스크톱 클라이언트에게 전달
     connections.forEach((client) => {
-      if (client !== ws && client.readyState === ws.OPEN) {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(data);
       }
     });
@@ -62,26 +65,30 @@ wss.on("connection", (ws) => {
 });
 
 // 비디오 업로드 API
-app.post("/api/upload", upload.single("video"), async (req, res) => {
-  try {
-    const videoId = uuidv4();
-    const videoPath = join(VIDEOS_DIR, `${videoId}.webm`);
+app.post(
+  "/api/upload",
+  upload.single("video"),
+  async (req: Request, res: Response) => {
+    try {
+      const videoId = uuidv4();
+      const videoPath = join(VIDEOS_DIR, `${videoId}.webm`);
 
-    const videoBuffer = req.file?.buffer;
-    if (!videoBuffer) {
-      throw new Error("No file uploaded");
+      const videoBuffer = req.file?.buffer;
+      if (!videoBuffer) {
+        throw new Error("No file uploaded");
+      }
+      await writeFile(videoPath, videoBuffer);
+
+      res.json({ videoId });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ error: "Upload failed" });
     }
-    await writeFile(videoPath, videoBuffer);
-
-    res.json({ videoId });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ error: "Upload failed" });
   }
-});
+);
 
 // 비디오 스트리밍 API
-app.get("/api/videos/:videoId", (req, res) => {
+app.get("/api/videos/:videoId", (req: Request, res: Response) => {
   const videoPath = join(VIDEOS_DIR, `${req.params.videoId}.webm`);
   res.sendFile(videoPath);
 });
