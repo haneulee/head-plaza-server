@@ -5,6 +5,7 @@ const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const { writeFile } = require("fs/promises");
 const express = require("express");
+const fs = require("fs");
 
 const app = express();
 const server = createServer(app);
@@ -22,8 +23,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add middleware to parse JSON and form data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from public directory
+app.use(express.static(join(process.cwd(), "public")));
+
 // 비디오 저장 디렉토리
 const VIDEOS_DIR = join(process.cwd(), "public", "videos");
+
+// Ensure the videos directory exists
+if (!fs.existsSync(VIDEOS_DIR)) {
+  fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+}
 
 // WebSocket 연결 관리
 const connections = new Map();
