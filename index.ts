@@ -54,3 +54,36 @@ const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`🌍 WebSocket 서버 실행 중: ws://localhost:${PORT}`);
 });
+
+// 헬스 체크 엔드포인트 추가
+app.get(
+  "/",
+  (
+    req: any,
+    res: {
+      status: (arg0: number) => {
+        (): any;
+        new (): any;
+        send: { (arg0: string): void; new (): any };
+      };
+    }
+  ) => {
+    res.status(200).send("Server is running");
+  }
+);
+
+app.get(
+  "/health",
+  (
+    req: any,
+    res: {
+      status: (arg0: number) => {
+        (): any;
+        new (): any;
+        send: { (arg0: string): void; new (): any };
+      };
+    }
+  ) => {
+    res.status(200).send("OK");
+  }
+);
